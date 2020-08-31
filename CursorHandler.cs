@@ -1,12 +1,16 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Specialized;
 using UnityEngine;
+using UnityEngine.UI;
 
 /* 
 TODO:
-- On click record & display position of mousePos and worldPosition
-- On click record & display distance from center
-- On click record & display angle difference from north
-- Set max length of linerenderer to radius of Button_White
+X On click record & display position of mousePos and worldPosition
+X On click record & display distance from center
+X On click record & display angle difference from north
+X Set max length of linerenderer to radius of Button_White
+- Fix position y bug of objects/canvas (Canvas y = 1, causing true origin of circle to not be 0)
 - Organize Canvas objects to be in correct positions
 - Add a white background to Canvas
 - Add Game Objects overlayed on Stimulus to each object's center displayed in Stimulus, name them appropriately
@@ -31,9 +35,12 @@ public class CursorHandler : MonoBehaviour
     private Vector3 _initialPosition;
     private Vector3 _currentPosition;
     private Vector3 circleCenter;
+
     // Start is called before the first frame update
     void Start()
     {
+        // Find Circle button game objects
+        
         // Enable visibility for the user's mouse
         Cursor.visible = true;
 
@@ -49,6 +56,7 @@ public class CursorHandler : MonoBehaviour
         _lineRenderer.SetPosition(0, circleCenter);
         _lineRenderer.SetVertexCount(2);
 
+
     }
 
     // Update is called once per frame
@@ -60,10 +68,58 @@ public class CursorHandler : MonoBehaviour
 
         // Take the edited mouse position and convert it's coordinates to world coordinates
         worldPosition = Camera.main.ScreenToWorldPoint(mousePos);
-  
+
+        Vector3 northpoint = new Vector3(circleCenter.x, 10f, circleCenter.z);
+
+        float angle = -Vector2.SignedAngle(northpoint - circleCenter, worldPosition - circleCenter);
+        angle = CalculateAngle(angle);
+        float radians = angle * Mathf.Deg2Rad;
+        float y = 6 * Mathf.Cos(radians) + 1;
+        float x = 6 * Mathf.Sin(radians);
+        Vector3 line = new Vector3(x, y, worldPosition.z);
 
         // Set the second position (1) to the new World Coordinates of the mouse pointer.
-        _lineRenderer.SetPosition(1, worldPosition);
+        _lineRenderer.SetPosition(1, line);
+    }
+
+    // Function that handles all operations when Circles are clicked
+    public void ClickCircle()
+    {
+        // Calculate the reported angle by getting the difference between the north vector and the mouse click vector
+        Vector3 northpoint = new Vector3(circleCenter.x, 10f, circleCenter.z);
+        float angle = -Vector2.SignedAngle(northpoint - circleCenter, worldPosition - circleCenter);
+        angle = CalculateAngle(angle);
+
+        // Calculate length of line, distance from circle center to clicked area
+        float dist = Vector2.Distance(worldPosition, circleCenter);
+
+        //Calculate point on circle border
+        float radians = angle * Mathf.Deg2Rad;
+        float y = 0 * Mathf.Cos(radians);
+        float x = 0 * Mathf.Sin(radians);
+        
+
+        // Print values for debugging
+        print(
+            "Mouse Pos: " + worldPosition +  
+            "\tLine Length:  " + dist +
+            "\tDegree Reported: " + angle 
+            );
+        
+    }
+
+    // Function for converting the signed angle to 360 degrees clockwise
+    public static float CalculateAngle(float angle)
+    {
+
+        if (angle < 0)              // If angle is negative (i.e on 'left' hemisphere of circle)
+            angle = 360 + angle;
+        else
+        {
+            angle = angle;  
+        }
+        return angle;
+
     }
 
 
