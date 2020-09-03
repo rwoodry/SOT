@@ -18,6 +18,7 @@ X Create Trial handler that initializes a list of trials (whether random or pre-
         X Cycles through each one, resetting each time
         - Store trial data: trialnum, standingAt, lookingAt, pointingAt, trialStartTime, trialEndTime, 
             trialReactionTime, mousePos, worldPosition, lineLength, correctAngle, obtainedAngle, errorAngleDegrees, errorAnglePercent
+- Add Correct Angle Display
 - Add Launcher Menu
 - Add Mturk Worker ID Query
 - Add Time Limit functionality
@@ -28,6 +29,8 @@ X Create Trial handler that initializes a list of trials (whether random or pre-
 public class DataManager : MonoBehaviour
 {
     private GameObject compass;
+    private GameObject corrCompass;
+    private GameObject corrLine;
     public float correctAngle;
     public TrialManager tm;
     public static bool SOTStart = false;
@@ -38,6 +41,8 @@ public class DataManager : MonoBehaviour
     void Start()
     {
         compass = GameObject.Find("Compass");
+        corrCompass = GameObject.Find("CorrectCircle");
+        corrLine = GameObject.Find("CorrectLine");
 
     }
 
@@ -52,7 +57,6 @@ public class DataManager : MonoBehaviour
 
     public void recordData()
     {
-
         alignMousePos = new Vector3(FaceMouse.mousePos.x, FaceMouse.mousePos.y, compass.transform.position.z);
         float distance = Vector3.Distance(alignMousePos, compass.transform.position);
 
@@ -70,6 +74,8 @@ public class DataManager : MonoBehaviour
             + "\tDist: " + distance*/
             + "\tAlternate Angle: " + inputAngle
             );
+
+        DisplayCorrectAngle();
 
         tm.NextTrial();
 
@@ -94,6 +100,13 @@ public class DataManager : MonoBehaviour
         Debug.Log("Compass " + B + "Norht" + A + "MOUSE " + C);
         float inAngle = Vector2.SignedAngle(A - B, C - B);
         return inAngle;
+    }
+
+    void DisplayCorrectAngle()
+    {
+        corrCompass.transform.eulerAngles = new Vector3(0, 0, 0);
+        corrCompass.transform.Rotate(0, 0, correctAngle);
+        corrLine.GetComponent<MeshRenderer>().enabled = true;
     }
 
 }
