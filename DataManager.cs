@@ -14,8 +14,8 @@ X Add a white background to Canvas
 X Add Game Objects overlayed on Stimulus to each object's center displayed in Stimulus, name them appropriately
 X Write function that takes three objects (standingAt, lookingAt, pointingAt):
         X calculates degrees of difference b/w standingAt::PointingAt and standingAt::lookingAt
-- Create Trial handler that initializes a list of trials (whether random or pre-written)
-        - Cycles through each one, resetting each time
+X Create Trial handler that initializes a list of trials (whether random or pre-written)
+        X Cycles through each one, resetting each time
         - Store trial data: trialnum, standingAt, lookingAt, pointingAt, trialStartTime, trialEndTime, 
             trialReactionTime, mousePos, worldPosition, lineLength, correctAngle, obtainedAngle, errorAngleDegrees, errorAnglePercent
 - Add Launcher Menu
@@ -28,28 +28,16 @@ X Write function that takes three objects (standingAt, lookingAt, pointingAt):
 public class DataManager : MonoBehaviour
 {
     private GameObject compass;
-    public Text text_startAt;
-    public Text text_lookAt;
-    public Text text_pointAt;
-
-    public string standingAt;
-    public string lookingAt;
-    public string pointingAt;
     public float correctAngle;
+    public TrialManager tm;
+    public static bool SOTStart = false;
+    private Vector3 alignMousePos;
+    private float inputAngle;
 
     // Start is called before the first frame update
     void Start()
     {
         compass = GameObject.Find("Compass");
-
-        standingAt = "Barrel";
-        lookingAt = "Wheel";
-        pointingAt = "TrashCan";
-
-        text_startAt.text = "Stand at: " + standingAt;
-        text_lookAt.text = "Look at: " + lookingAt;
-        text_pointAt.text = "Point at: " + pointingAt;
-
 
     }
 
@@ -62,38 +50,50 @@ public class DataManager : MonoBehaviour
 
     }
 
-    void recordData()
+    public void recordData()
     {
 
+        alignMousePos = new Vector3(FaceMouse.mousePos.x, FaceMouse.mousePos.y, compass.transform.position.z);
+        float distance = Vector3.Distance(alignMousePos, compass.transform.position);
 
         correctAngle = GetCorrectAngle();
+        inputAngle = GetInputAngle();
 
-        Vector3 alignMousePos = new Vector3(FaceMouse.mousePos.x, FaceMouse.mousePos.y, compass.transform.position.z);
-        float distance = Vector3.Distance(alignMousePos, compass.transform.position);
-        
-        Debug.Log("StandAt: " + standingAt + "\tLookAt: " + lookingAt + "\tPointAt: " + pointingAt
+        Debug.Log("StandAt: " + tm.SA.name + "\tLookAt: " + tm.LA.name + "\tPointAt: " + tm.PA.name
             + "\tRotation: " + (360 - compass.transform.eulerAngles.z)
-            + "\tCorrect Angle: " + (360 - correctAngle)
-            + "\tAnglular Error: " + Mathf.DeltaAngle((360 - correctAngle), (360 - compass.transform.eulerAngles.z))
+            + "\tCorrect Angle: " + (correctAngle)
+            + "\tAnglular Error: " + Mathf.DeltaAngle((inputAngle), (correctAngle))
             /*            + "\tMouse Pos: " + FaceMouse.mousePos
                         + "\tWorld Pos: " + Input.mousePosition
                         + "\tAligned Mouse Pos: " + alignMousePos*/
-            + "\tDir: " + FaceMouse.direction
-            + "\tDist: " + distance
+/*            + "\tDir: " + FaceMouse.direction
+            + "\tDist: " + distance*/
+            + "\tAlternate Angle: " + inputAngle
             );
+
+        tm.NextTrial();
 
     }
 
     public float GetCorrectAngle()
     {
-        Vector3 A = GameObject.Find(lookingAt).transform.position;
-        Vector3 B = GameObject.Find(standingAt).transform.position;
-        Vector3 C = GameObject.Find(pointingAt).transform.position;
+        Vector3 A = tm.LA.transform.position;
+        Vector3 B = tm.SA.transform.position;
+        Vector3 C = tm.PA.transform.position;
 
-        float corrAngle = Vector2.Angle(A - B, C - B);
+        float corrAngle = Vector2.SignedAngle(A - B, C - B);
         return corrAngle;
         
     }
 
+    public float GetInputAngle()
+    {
+        Vector3 A = transform.position;
+        Vector3 B = compass.transform.position;
+        Vector3 C = alignMousePos;
+        Debug.Log("Compass " + B + "Norht" + A + "MOUSE " + C);
+        float inAngle = Vector2.SignedAngle(A - B, C - B);
+        return inAngle;
+    }
 
 }
