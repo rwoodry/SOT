@@ -10,6 +10,7 @@ public class FaceMouse : MonoBehaviour
     
     public static Vector3 mousePos;
     public static Vector2 direction;
+    public bool lineFollow = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -36,7 +37,8 @@ public class FaceMouse : MonoBehaviour
         );
 
         // Rotate the compass' transform up (north vector) to the new direction
-        transform.up = direction;
+        if (lineFollow) { transform.up = direction; }
+        
 
     }
 }

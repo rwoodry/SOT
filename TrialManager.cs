@@ -20,6 +20,8 @@ public class TrialManager : MonoBehaviour
     public static int trialnum = 0;
     public static float trialStart;
     public int trialMax = 7;
+    public float timeLimit = 15;
+    public float trialSceneInitTime;
 
     // Start is called before the first frame update
     void Start()
@@ -33,6 +35,7 @@ public class TrialManager : MonoBehaviour
         text_pointAt.text = "Point at: " + PA.name;
 
         trialStart = Time.time;
+        trialSceneInitTime = Time.time;
 
         Debug.Log("||SOT Started|| " + trialStart);
     }
@@ -58,7 +61,7 @@ public class TrialManager : MonoBehaviour
 
     public void NextTrial()
     {
-        if (trialnum == trialMax - 1)
+        if (trialnum == trialMax - 1 || Time.time - trialSceneInitTime >= timeLimit)
         {
             SceneManager.LoadScene("Complete");
         }

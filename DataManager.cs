@@ -22,12 +22,12 @@ X Add Correct Angle Display
 X Add Launcher Menu
 X Add Completion Scene
 - Add Feedback in between trials with 
-    - on first click record data and show intermediary text
-    - data as a string with error in degrees and percent
-    - showing input angle vs. correct angle
+    X on first click record data and show intermediary text
+    X data as a string with error in degrees and percent
+    X showing input angle vs. correct angle
     - on second click do next trial
-- Add Mturk Worker ID Query
-- Add Time Limit functionality
+X Add Mturk Worker ID Query
+X Add Time Limit functionality
 - Add Generate random token ID
 - Add PHP integration
 
@@ -35,8 +35,8 @@ X Add Completion Scene
 public class DataManager : MonoBehaviour
 {
     private GameObject compass;
-    private GameObject corrCompass;
-    private GameObject corrLine;
+    private GameObject corrCompass, inputCompass;
+    private GameObject corrLine, inputLine;
     public float correctAngle;
     public TrialManager tm;
     public static bool SOTStart = false;
@@ -44,13 +44,17 @@ public class DataManager : MonoBehaviour
     private float inputAngle;
     public string FILE_NAME;
     public string trialData = "";
+    public Text textError;
+    private float angularError, pctAngular180Error;
     // Start is called before the first frame update
     void Start()
     {
         FILE_NAME = LaunchManager.workerID + ".csv";
         compass = GameObject.Find("Compass");
         corrCompass = GameObject.Find("CorrectCircle");
+        inputCompass = GameObject.Find("InputCircle");
         corrLine = GameObject.Find("CorrectLine");
+        inputLine = GameObject.Find("InputLine");
 
     }
 
@@ -99,8 +103,14 @@ public class DataManager : MonoBehaviour
     void DisplayCorrectAngle()
     {
         corrCompass.transform.eulerAngles = new Vector3(0, 0, 0);
+        inputCompass.transform.eulerAngles = new Vector3(0, 0, 0);
         corrCompass.transform.Rotate(0, 0, correctAngle);
+        inputCompass.transform.Rotate(0, 0, inputAngle);
         corrLine.GetComponent<MeshRenderer>().enabled = true;
+        inputLine.GetComponent<MeshRenderer>().enabled = true;
+        inputCompass.transform.up = FaceMouse.direction;
+        textError.text = "Input Angle: " + Mathf.Abs(inputAngle).ToString("F2") + "\tCorrect Angle: " + Mathf.Abs(correctAngle).ToString("F2") 
+            + "\nAngular Error: " + Mathf.Abs(angularError).ToString("F2") + " (" + (pctAngular180Error*100).ToString("F2") + "% error)";
     }
 
     public string GetDataString()
@@ -111,8 +121,8 @@ public class DataManager : MonoBehaviour
         correctAngle = GetCorrectAngle();
 
         float distance = Vector3.Distance(alignMousePos, compass.transform.position);
-        float angularError = Mathf.DeltaAngle((inputAngle), (correctAngle));
-        float pctAngular180Error = Mathf.Abs(angularError / 180);
+        angularError = Mathf.DeltaAngle((inputAngle), (correctAngle));
+        pctAngular180Error = Mathf.Abs(angularError / 180);
         float inputAngleEulerClockwise = (360 - compass.transform.eulerAngles.z);
         float trialEnd = Time.time;
         float trialReactionTime = trialEnd - TrialManager.trialStart;
