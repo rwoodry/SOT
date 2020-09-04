@@ -18,6 +18,8 @@ public class TrialManager : MonoBehaviour
     public Text text_pointAt;
     private static bool created = false;
     public static int trialnum = 0;
+    public static float trialStart;
+    public int trialMax = 7;
 
     // Start is called before the first frame update
     void Start()
@@ -30,7 +32,9 @@ public class TrialManager : MonoBehaviour
         text_lookAt.text = "Look at: " + LA.name;
         text_pointAt.text = "Point at: " + PA.name;
 
-        Debug.Log("||SOT Started|| \tTrial: " + trialnum + "\tSA: " + SA.name + "\tLA: " + LA.name + "\tPA: " + PA.name);
+        trialStart = Time.time;
+
+        Debug.Log("||SOT Started|| " + trialStart);
     }
 
     void Awake()
@@ -54,16 +58,26 @@ public class TrialManager : MonoBehaviour
 
     public void NextTrial()
     {
-        trialnum += 1;
+        if (trialnum == trialMax - 1)
+        {
+            SceneManager.LoadScene("Complete");
+        }
+        else
+        {
+            trialnum += 1;
 
-        SA = arrayStandAt[trialnum];
-        LA = arrayLookAt[trialnum];
-        PA = arrayPointAt[trialnum];
+            SA = arrayStandAt[trialnum];
+            LA = arrayLookAt[trialnum];
+            PA = arrayPointAt[trialnum];
 
-        text_startAt.text = "Stand at: " + SA.name;
-        text_lookAt.text = "Look at: " + LA.name;
-        text_pointAt.text = "Point at: " + PA.name;
+            text_startAt.text = "Stand at: " + SA.name;
+            text_lookAt.text = "Look at: " + LA.name;
+            text_pointAt.text = "Point at: " + PA.name;
 
-        Debug.Log("||Next Trial Loaded|| \tTrial: " + trialnum + "\tSA: " + SA.name + "\tLA: " + LA.name + "\tPA: " + PA.name);
+            trialStart = Time.time;
+
+            Debug.Log("||Next Trial Loaded|| \tTrial: " + trialnum + "\tSA: " + SA.name + "\tLA: " + LA.name + "\tPA: " + PA.name);
+        }
+
     }
 }

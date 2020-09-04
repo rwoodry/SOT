@@ -2,7 +2,7 @@
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
-
+using System.IO;
 
 /* 
 TODO:
@@ -16,10 +16,16 @@ X Write function that takes three objects (standingAt, lookingAt, pointingAt):
         X calculates degrees of difference b/w standingAt::PointingAt and standingAt::lookingAt
 X Create Trial handler that initializes a list of trials (whether random or pre-written)
         X Cycles through each one, resetting each time
-        - Store trial data: trialnum, standingAt, lookingAt, pointingAt, trialStartTime, trialEndTime, 
+        X Store trial data: trialnum, standingAt, lookingAt, pointingAt, trialStartTime, trialEndTime, 
             trialReactionTime, mousePos, worldPosition, lineLength, correctAngle, obtainedAngle, errorAngleDegrees, errorAnglePercent
-- Add Correct Angle Display
-- Add Launcher Menu
+X Add Correct Angle Display
+X Add Launcher Menu
+X Add Completion Scene
+- Add Feedback in between trials with 
+    - on first click record data and show intermediary text
+    - data as a string with error in degrees and percent
+    - showing input angle vs. correct angle
+    - on second click do next trial
 - Add Mturk Worker ID Query
 - Add Time Limit functionality
 - Add Generate random token ID
@@ -36,10 +42,12 @@ public class DataManager : MonoBehaviour
     public static bool SOTStart = false;
     private Vector3 alignMousePos;
     private float inputAngle;
-
+    public string FILE_NAME;
+    public string trialData = "";
     // Start is called before the first frame update
     void Start()
     {
+        FILE_NAME = LaunchManager.workerID + ".csv";
         compass = GameObject.Find("Compass");
         corrCompass = GameObject.Find("CorrectCircle");
         corrLine = GameObject.Find("CorrectLine");
@@ -57,23 +65,9 @@ public class DataManager : MonoBehaviour
 
     public void recordData()
     {
-        alignMousePos = new Vector3(FaceMouse.mousePos.x, FaceMouse.mousePos.y, compass.transform.position.z);
-        float distance = Vector3.Distance(alignMousePos, compass.transform.position);
+        trialData = GetDataString();
 
-        correctAngle = GetCorrectAngle();
-        inputAngle = GetInputAngle();
-
-        Debug.Log("StandAt: " + tm.SA.name + "\tLookAt: " + tm.LA.name + "\tPointAt: " + tm.PA.name
-            + "\tRotation: " + (360 - compass.transform.eulerAngles.z)
-            + "\tCorrect Angle: " + (correctAngle)
-            + "\tAnglular Error: " + Mathf.DeltaAngle((inputAngle), (correctAngle))
-            /*            + "\tMouse Pos: " + FaceMouse.mousePos
-                        + "\tWorld Pos: " + Input.mousePosition
-                        + "\tAligned Mouse Pos: " + alignMousePos*/
-/*            + "\tDir: " + FaceMouse.direction
-            + "\tDist: " + distance*/
-            + "\tAlternate Angle: " + inputAngle
-            );
+        WriteToFile();
 
         DisplayCorrectAngle();
 
@@ -97,7 +91,7 @@ public class DataManager : MonoBehaviour
         Vector3 A = transform.position;
         Vector3 B = compass.transform.position;
         Vector3 C = alignMousePos;
-        Debug.Log("Compass " + B + "Norht" + A + "MOUSE " + C);
+
         float inAngle = Vector2.SignedAngle(A - B, C - B);
         return inAngle;
     }
@@ -109,4 +103,50 @@ public class DataManager : MonoBehaviour
         corrLine.GetComponent<MeshRenderer>().enabled = true;
     }
 
+    public string GetDataString()
+    {
+        alignMousePos = new Vector3(FaceMouse.mousePos.x, FaceMouse.mousePos.y, compass.transform.position.z);
+
+        inputAngle = GetInputAngle();
+        correctAngle = GetCorrectAngle();
+
+        float distance = Vector3.Distance(alignMousePos, compass.transform.position);
+        float angularError = Mathf.DeltaAngle((inputAngle), (correctAngle));
+        float pctAngular180Error = Mathf.Abs(angularError / 180);
+        float inputAngleEulerClockwise = (360 - compass.transform.eulerAngles.z);
+        float trialEnd = Time.time;
+        float trialReactionTime = trialEnd - TrialManager.trialStart;
+
+        Debug.Log(" IA: " + inputAngle + " CA: " + correctAngle + " AE: " + angularError + " TS: " + TrialManager.trialStart + " TE: " + trialEnd + " TR: " + trialReactionTime);
+
+        string tdata = TrialManager.trialnum.ToString() + ", "
+            + tm.SA.name + ", "
+            + tm.LA.name + ", "
+            + tm.PA.name + ", "
+            + alignMousePos.ToString() + ", "
+            + distance.ToString() + ", "
+            + FaceMouse.direction.ToString() + ", "
+            + inputAngle.ToString() + ", "
+            + correctAngle.ToString() + ", "
+            + angularError.ToString() + ", "
+            + pctAngular180Error.ToString() + ", "
+            + inputAngleEulerClockwise.ToString() + ", "
+            + TrialManager.trialStart.ToString() + ", "
+            + trialEnd.ToString() + ", "
+            + trialReactionTime.ToString()
+            ;
+
+        return tdata;
+    }
+
+    void WriteToFile()
+    {
+        StreamWriter sw = File.AppendText(FILE_NAME);
+        if (new FileInfo(FILE_NAME).Length == 0)
+        {
+            sw.WriteLine("trialNum, standAt, lookAt, pointAt, mousePos, mouseDist, mouseDir, responseAngle, correctAngle, angularError, pctAngularError, responseAngleEuler, startTime, endTime, reactionTime");
+        }
+        sw.WriteLine(trialData);
+        sw.Close();
+    }
 }
