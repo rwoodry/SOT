@@ -21,13 +21,30 @@ X Create Trial handler that initializes a list of trials (whether random or pre-
 X Add Correct Angle Display
 X Add Launcher Menu
 X Add Completion Scene
-- Add Feedback in between trials with 
-    X on first click record data and show intermediary text
-    X data as a string with error in degrees and percent
+X Add Feedback in between trials with 
+    X on first click record data and show intermediary texts
     X showing input angle vs. correct angle
-    - on second click do next trial
+    X on ENTER do next trial
+    X add secondary trialTime related to Enter press
 X Add Mturk Worker ID Query
 X Add Time Limit functionality
+X Add intructions trial text
+X Add subject column
+X Add North compass line
+X Add stand at | look at text on compass
+X Fix object names
+X Adjust stim and circle size
+X Add vertical line separator
+X Add instructions slide
+X Add instructions section
+X Add practice slide
+X Add practice section (3, show error)
+- Edit feedback to disapear when next trial is loaded
+X Add test slide
+- Add test section (no feedback)
+X Add proper time limit to TEST trials
+- Add trial type column to data
+X Add the proper twelve item orders to arrays
 - Add Generate random token ID
 - Add PHP integration
 
@@ -44,8 +61,8 @@ public class DataManager : MonoBehaviour
     private float inputAngle;
     public string FILE_NAME;
     public string trialData = "";
-    public Text textError;
-    private float angularError, pctAngular180Error;
+    private float angularError, pctAngular180Error, trialReactionTime;
+    public bool responseAcquired = false;
     // Start is called before the first frame update
     void Start()
     {
@@ -63,19 +80,37 @@ public class DataManager : MonoBehaviour
     {
 
         if (Input.GetMouseButtonDown(0))
+        {
             recordData();
+        }
+            
+        if (Input.GetKeyDown("return") && responseAcquired)
+        {
+            trialData = GetDataString();
+            WriteToFile();
+
+            tm.NextTrial();
+
+            responseAcquired = false;
+
+        } else if (Input.GetKeyDown("return"))
+        {
+            tm.textInstructions.text = "Imagine you are standing at the <b>" + tm.SA.name + "</b> and facing the <b>" + tm.LA.name + "</b>. Point to the <b>" + tm.PA.name
+            + "</b>\n\nPlease indicate your estimate with a mouse click, then please press ENTER when finished.";
+        }
 
     }
 
     public void recordData()
     {
-        trialData = GetDataString();
+        responseAcquired = true;
+        trialReactionTime = Time.time - TrialManager.trialStart;
+        alignMousePos = new Vector3(FaceMouse.mousePos.x, FaceMouse.mousePos.y, compass.transform.position.z);
 
-        WriteToFile();
+        inputAngle = GetInputAngle();
+        correctAngle = GetCorrectAngle();
 
         DisplayCorrectAngle();
-
-        tm.NextTrial();
 
     }
 
@@ -104,32 +139,29 @@ public class DataManager : MonoBehaviour
     {
         corrCompass.transform.eulerAngles = new Vector3(0, 0, 0);
         inputCompass.transform.eulerAngles = new Vector3(0, 0, 0);
+
         corrCompass.transform.Rotate(0, 0, correctAngle);
         inputCompass.transform.Rotate(0, 0, inputAngle);
+
         corrLine.GetComponent<MeshRenderer>().enabled = true;
         inputLine.GetComponent<MeshRenderer>().enabled = true;
+
         inputCompass.transform.up = FaceMouse.direction;
-        textError.text = "Input Angle: " + Mathf.Abs(inputAngle).ToString("F2") + "\tCorrect Angle: " + Mathf.Abs(correctAngle).ToString("F2") 
-            + "\nAngular Error: " + Mathf.Abs(angularError).ToString("F2") + " (" + (pctAngular180Error*100).ToString("F2") + "% error)";
     }
 
     public string GetDataString()
     {
-        alignMousePos = new Vector3(FaceMouse.mousePos.x, FaceMouse.mousePos.y, compass.transform.position.z);
-
-        inputAngle = GetInputAngle();
-        correctAngle = GetCorrectAngle();
-
         float distance = Vector3.Distance(alignMousePos, compass.transform.position);
         angularError = Mathf.DeltaAngle((inputAngle), (correctAngle));
         pctAngular180Error = Mathf.Abs(angularError / 180);
         float inputAngleEulerClockwise = (360 - compass.transform.eulerAngles.z);
         float trialEnd = Time.time;
-        float trialReactionTime = trialEnd - TrialManager.trialStart;
+        float trialResponseTime = trialEnd - TrialManager.trialStart;
 
         Debug.Log(" IA: " + inputAngle + " CA: " + correctAngle + " AE: " + angularError + " TS: " + TrialManager.trialStart + " TE: " + trialEnd + " TR: " + trialReactionTime);
 
-        string tdata = TrialManager.trialnum.ToString() + ", "
+        string tdata = LaunchManager.workerID + ", " 
+            + TrialManager.trialnum.ToString() + ", "
             + tm.SA.name + ", "
             + tm.LA.name + ", "
             + tm.PA.name + ", "
@@ -144,6 +176,7 @@ public class DataManager : MonoBehaviour
             + TrialManager.trialStart.ToString() + ", "
             + trialEnd.ToString() + ", "
             + trialReactionTime.ToString()
+            + trialResponseTime.ToString()
             ;
 
         return tdata;
@@ -154,7 +187,7 @@ public class DataManager : MonoBehaviour
         StreamWriter sw = File.AppendText(FILE_NAME);
         if (new FileInfo(FILE_NAME).Length == 0)
         {
-            sw.WriteLine("trialNum, standAt, lookAt, pointAt, mousePos, mouseDist, mouseDir, responseAngle, correctAngle, angularError, pctAngularError, responseAngleEuler, startTime, endTime, reactionTime");
+            sw.WriteLine("workerID, trialNum, standAt, lookAt, pointAt, mousePos, mouseDist, mouseDir, responseAngle, correctAngle, angularError, pctAngularError, responseAngleEuler, startTime, endTime, reactionTime, responseTime");
         }
         sw.WriteLine(trialData);
         sw.Close();

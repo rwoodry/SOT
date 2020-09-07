@@ -12,6 +12,8 @@ public class LaunchManager : MonoBehaviour
     public GameObject instructText;
     public static string workerID;
     private bool sotReadyToStart = false;
+    public TrialManager TM;
+
 
     // Start is called before the first frame update
     void Start()
@@ -25,6 +27,8 @@ public class LaunchManager : MonoBehaviour
         if (sotReadyToStart & Input.GetKeyDown("return"))
         {
             SceneManager.LoadScene("TrialScreen");
+            TrialManager.trialnum = -1;
+
         }
     }
 
