@@ -5,5 +5,5 @@ These Scripts are used in the Unity WebGL build version of the Spatial Orientati
 
 The 5 minute task can be taken by clicking on the link below.
 
-www.spatialneuroscience.bio.uci.edu/SOT
+http://spatialneuroscience.bio.uci.edu/SOT/
 
