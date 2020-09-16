@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -10,9 +11,7 @@ public class TrialManager : MonoBehaviour
     public GameObject[] arrayStandAt;
     public GameObject[] arrayLookAt;
     public GameObject[] arrayPointAt;
-    public GameObject SA;
-    public GameObject LA;
-    public GameObject PA;
+    public GameObject SA, LA, PA, corrCompass, corrLine;
     public Text textInstructions, textSA, textLA;
     public static string section = "Practice";
     private static bool created = false;
@@ -23,12 +22,17 @@ public class TrialManager : MonoBehaviour
     public float trialSceneInitTime;
     public InstructionsManager IM;
     public bool trialBegan = false;
+    public DataManager DM;
+    public TextMeshProUGUI tokenText;
+
 
     // Start is called before the first frame update
     void Start()
     {
         Debug.Log("TRIAL SCENE LOADED: " + trialnum);
         NextTrial();
+        corrCompass = GameObject.Find("CorrectCircle");
+        corrLine = GameObject.Find("CorrectLine");
 
     }
 
@@ -97,8 +101,28 @@ public class TrialManager : MonoBehaviour
             LA = arrayLookAt[trialnum];
             PA = arrayPointAt[trialnum];
 
-            textInstructions.text = "Imagine you are standing at the <b>" + SA.name + "</b> and facing the <b>" + LA.name + "</b>. Point to the <b>" + PA.name
+            if (section == "Instructions")
+            {
+                textInstructions.text = "Imagine you are standing at the <b>" + SA.name + "</b> and facing the <b>" + LA.name + "</b>. Point to the <b>" + PA.name
+                + "</b>\n\nHere is a sample item that has the correct answer shown. Orient your line (Black) using the mouse to the desired response. Match your answer to the correct answer shown (Green) and click to set your answer (Purple). Can you satisfy yourself that this answer is the correct answer?" 
+                + "\n\nPlease press ENTER when finished.";
+
+                corrCompass = GameObject.Find("CorrectCircle");
+                corrLine = GameObject.Find("CorrectLine");
+
+                float correctAngle = DM.GetCorrectAngle();
+                corrCompass.transform.eulerAngles = new Vector3(0, 0, 0);
+                corrCompass.transform.Rotate(0, 0, correctAngle);
+                corrLine.GetComponent<MeshRenderer>().enabled = true;
+                
+            } 
+            else
+            {
+                textInstructions.text = "Imagine you are standing at the <b>" + SA.name + "</b> and facing the <b>" + LA.name + "</b>. Point to the <b>" + PA.name
                 + "</b>\n\nPlease press ENTER when finished.";
+            }
+
+
             textSA.text = SA.name;
             textLA.text = LA.name;
 

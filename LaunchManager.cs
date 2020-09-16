@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Linq;
 
 public class LaunchManager : MonoBehaviour
 {
@@ -13,6 +14,9 @@ public class LaunchManager : MonoBehaviour
     public static string workerID;
     private bool sotReadyToStart = false;
     public TrialManager TM;
+    public static string token_SOT;
+    private static System.Random random = new System.Random();
+    private static bool created = false;
 
 
     // Start is called before the first frame update
@@ -20,6 +24,7 @@ public class LaunchManager : MonoBehaviour
     {
         
     }
+
 
     // Update is called once per frame
     void Update()
@@ -40,7 +45,10 @@ public class LaunchManager : MonoBehaviour
             workerID = workerIDField.text;
             workerIDField.GetComponent<InputField>().interactable = false;
             sotReadyToStart = true;
-            Debug.Log(workerID);
+
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            token_SOT = new string(Enumerable.Repeat(chars, 8).Select(s => s[random.Next(s.Length)]).ToArray());
+            Debug.Log(workerID + "TOKEN: " + token_SOT);
 
         }
     }

@@ -39,13 +39,14 @@ X Add instructions slide
 X Add instructions section
 X Add practice slide
 X Add practice section (3, show error)
-- Edit feedback to disapear when next trial is loaded
+X Edit feedback to disapear when next trial is loaded
 X Add test slide
-- Add test section (no feedback)
+X Add test section (no feedback)
 X Add proper time limit to TEST trials
-- Add trial type column to data
+X Add trial type column to data
 X Add the proper twelve item orders to arrays
-- Add Generate random token ID
+X Edit instructions trial to be displaying correct angle
+X Add Generate random token ID
 - Add PHP integration
 
 */
@@ -63,15 +64,20 @@ public class DataManager : MonoBehaviour
     public string trialData = "";
     private float angularError, pctAngular180Error, trialReactionTime;
     public bool responseAcquired = false;
+    public static string token_SOT;
+    public static string ipAddress = "";
+    public string inputDomain = "spatialneuroscience.bio.uci.edu/SOT";
     // Start is called before the first frame update
     void Start()
     {
-        FILE_NAME = LaunchManager.workerID + ".csv";
+        FILE_NAME = LaunchManager.workerID + "_" + LaunchManager.token_SOT + ".csv";
+        token_SOT = LaunchManager.token_SOT;
         compass = GameObject.Find("Compass");
         corrCompass = GameObject.Find("CorrectCircle");
         inputCompass = GameObject.Find("InputCircle");
         corrLine = GameObject.Find("CorrectLine");
         inputLine = GameObject.Find("InputLine");
+        ipAddress = "http://" + inputDomain + "/OFTreceipt.php";
 
     }
 
@@ -93,6 +99,10 @@ public class DataManager : MonoBehaviour
 
             responseAcquired = false;
 
+
+            corrLine.GetComponent<MeshRenderer>().enabled = false;
+            inputLine.GetComponent<MeshRenderer>().enabled = false;
+
         } else if (Input.GetKeyDown("return"))
         {
             tm.textInstructions.text = "Imagine you are standing at the <b>" + tm.SA.name + "</b> and facing the <b>" + tm.LA.name + "</b>. Point to the <b>" + tm.PA.name
@@ -111,6 +121,7 @@ public class DataManager : MonoBehaviour
         correctAngle = GetCorrectAngle();
 
         DisplayCorrectAngle();
+        
 
     }
 
@@ -135,7 +146,7 @@ public class DataManager : MonoBehaviour
         return inAngle;
     }
 
-    void DisplayCorrectAngle()
+    public void DisplayCorrectAngle()
     {
         corrCompass.transform.eulerAngles = new Vector3(0, 0, 0);
         inputCompass.transform.eulerAngles = new Vector3(0, 0, 0);
@@ -143,9 +154,12 @@ public class DataManager : MonoBehaviour
         corrCompass.transform.Rotate(0, 0, correctAngle);
         inputCompass.transform.Rotate(0, 0, inputAngle);
 
-        corrLine.GetComponent<MeshRenderer>().enabled = true;
-        inputLine.GetComponent<MeshRenderer>().enabled = true;
+        if (TrialManager.section != "Test")
+        {
+            corrLine.GetComponent<MeshRenderer>().enabled = true;
+        }
 
+        inputLine.GetComponent<MeshRenderer>().enabled = true;
         inputCompass.transform.up = FaceMouse.direction;
     }
 
@@ -162,6 +176,7 @@ public class DataManager : MonoBehaviour
 
         string tdata = LaunchManager.workerID + ", " 
             + TrialManager.trialnum.ToString() + ", "
+            + TrialManager.section + ", "
             + tm.SA.name + ", "
             + tm.LA.name + ", "
             + tm.PA.name + ", "
@@ -175,7 +190,7 @@ public class DataManager : MonoBehaviour
             + inputAngleEulerClockwise.ToString() + ", "
             + TrialManager.trialStart.ToString() + ", "
             + trialEnd.ToString() + ", "
-            + trialReactionTime.ToString()
+            + trialReactionTime.ToString() + ", "
             + trialResponseTime.ToString()
             ;
 
@@ -184,12 +199,29 @@ public class DataManager : MonoBehaviour
 
     void WriteToFile()
     {
+        // Hard write to folder
         StreamWriter sw = File.AppendText(FILE_NAME);
         if (new FileInfo(FILE_NAME).Length == 0)
         {
-            sw.WriteLine("workerID, trialNum, standAt, lookAt, pointAt, mousePos, mouseDist, mouseDir, responseAngle, correctAngle, angularError, pctAngularError, responseAngleEuler, startTime, endTime, reactionTime, responseTime");
+            sw.WriteLine("workerID, trialNum, trialType, standAt, lookAt, pointAt, mousePos, mouseDist, mouseDir, responseAngle, correctAngle, angularError, pctAngularError, responseAngleEuler, startTime, endTime, reactionTime, responseTime");
         }
         sw.WriteLine(trialData);
         sw.Close();
+
+        // PHP write to folder
+        if (TrialManager.trialnum == 0)
+        {
+            WWWForm formHeader = new WWWForm();
+            formHeader.AddField("input", "workerID, trialNum, trialType, standAt, lookAt, pointAt, mousePos, mouseDist, mouseDir, responseAngle, correctAngle, angularError, pctAngularError, responseAngleEuler, startTime, endTime, reactionTime, responseTime");
+            formHeader.AddField("filename", FILE_NAME);
+
+            WWW wwwH = new WWW(ipAddress, formHeader);
+        }
+
+        WWWForm form = new WWWForm();
+        form.AddField("input", trialData);
+        form.AddField("filename", FILE_NAME);
+
+        WWW www = new WWW(ipAddress, form);
     }
 }
